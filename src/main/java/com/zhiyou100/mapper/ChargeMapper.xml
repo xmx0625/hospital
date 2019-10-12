@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+namespace : 类路径
+	与此映射文件关联的接口文件路径
+ -->
+<mapper namespace="com.zhiyou100.mapper.ChargeMapper">
+	
+	<sql id="chargeSql">
+		c.id id,
+		c.medical_record cmedical_record,
+		c.pay_items_id pay_items_id,
+		c.charge_money charge_money,
+		c.charge_time charge_time
+	</sql>
+	
+	<select id="findAll" parameterType="Map" resultMap="chargeMap">
+		SELECT
+			<include refid="chargeSql"/>,
+			r.name rname,
+			p.charge_item_name charge_item_name
+		FROM
+			registration_infor r,
+			charge_manager c,
+			pay_items p
+		WHERE
+			c.medical_record = r.medical_record and c.pay_items_id = p.id
+			<if test="medical_record != null and medical_record != ''">
+				and r.medical_record like '%${medical_record}%'
+			</if>
+			<if test="medical_record != null and medical_record != ''">
+				and r.name like '%${rname}%'
+			</if>
+	</select>
+
+	<resultMap type="ChargeManager" id="chargeMap">
+		<id column="id" property="id"/>
+		<result column="cmedical_record" property="medical_record"/>
+		<result column="pay_items_id" property="pay_items_id"/>
+		<result column="charge_money" property="charge_money"/>
+		<result column="charge_time" property="charge_time"/>
+		<association property="registrationInfor" javaType="RegistrationInfor">
+			
+			<result column="rname" property="name"/>
+		</association>
+		<association property="payItems" javaType="PayItems">
+			
+			<result column="charge_item_name" property="charge_item_name"/>
+		</association>
+	</resultMap>
+
+	<select id="findMoney" parameterType="int">
+		SELECT 
+			charge_money
+		FROM
+			pay_items
+		WHERE
+			id = #{pay_items_id}
+	</select>
+
+	<insert id="addCharge" parameterType="ChargeManager">
+		INSERT INTO
+			charge_manager
+			(medical_record,
+			pay_items_id,
+			charge_money,
+			charge_time)
+		VALUES
+			(#{medical_record},
+			#{pay_items_id},
+			#{charge_money},
+			#{charge_time})
+	</insert>
+
+	<select id="findReg" parameterType="String" resultType="registrationInfor">
+		select * from registration_infor where medical_record = #{id}
+	</select>
+	
+	<select id="findPay" parameterType="String" resultType="payItems">
+		select * from pay_items where charge_item_name = #{charge_item_name}
+	</select>
+
+	<insert id="addChargePro" parameterType="Map">
+		insert into 
+			charge_manager 
+			(medical_record,pay_items_id,charge_money,charge_time) 
+		values 
+			(#{medical_record},
+			(select id from pay_items where charge_item_name = #{charge_item_name}),
+			#{charge_money},
+			#{time})
+	
+	</insert>
+
+
+
+
+
+</mapper>
